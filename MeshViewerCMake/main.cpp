@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <fstream>
+#include <sstream>
 
 #define GL_SILENCE_DEPRECATION
 #ifdef __APPLE__
@@ -265,23 +266,15 @@ void display() {
     vector<GLuint> silhouette_edges;
     for (vector<myHalfedge *>::iterator it = m->halfedges.begin();
          it != m->halfedges.end(); it++) {
+      /**** TODO: WRITE CODE TO COMPUTE SILHOUETTE ****/
       myHalfedge *e = (*it);
       myVertex *v1 = (*it)->source;
       if ((*it)->twin == NULL)
         continue;
       myVertex *v2 = (*it)->twin->source;
 
-      myVector3D direction = camera_eye - (*v1->point + *v2->point) * 0.5;
-
-      if (e->adjacent_face->normal == NULL)
-        e->adjacent_face->computeNormal();
-
-      double res1 = direction * *e->adjacent_face->normal;
-      double res2 = direction * *e->twin->adjacent_face->normal;
-
-      // if the two normals are in opposite directions, then the edge is a
-      // silhouette edge.
-      if (res1 < 0 != res2 < 0) {
+      if ( 0 /*ADD THE CONDITION TO CHECK IF THE HALFEDGE DEFINED BY (V1, V2) IS A SILHOUETTE EDGE*/ )
+			{
         silhouette_edges.push_back(v1->index);
         silhouette_edges.push_back(v2->index);
       }

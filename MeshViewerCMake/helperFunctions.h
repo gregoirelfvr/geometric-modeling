@@ -1,11 +1,11 @@
 #pragma once
 
+#include <GL/glew.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
 #include <GL/freeglut.h>
 #endif
-#include <GL/glew.h>
 #include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
