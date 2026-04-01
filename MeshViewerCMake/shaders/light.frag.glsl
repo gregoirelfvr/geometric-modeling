@@ -1,22 +1,18 @@
-#version 330 core
+#version 120
 
-in vec4 myvertex;
-in vec3 mynormal;
-
-out vec4 finalcolor;
+varying vec4 myvertex;
+varying vec3 mynormal;
 
 uniform mat4 myview_matrix;
 uniform mat3 mynormal_matrix;
 
 uniform int type;
-
 uniform vec4 kd;
-
-vec4 mylight_position = vec4(0,0,4,1);
-vec4 mylight_color = vec4(1,1,1,0);
 
 void main (void)
 {
+	vec4 mylight_position = vec4(0,0,4,1);
+	vec4 mylight_color = vec4(1,1,1,0);
 	vec3 eyepos = vec3(0,0,0) ;
 
 	vec4 _mypos = myview_matrix * myvertex ;
@@ -34,8 +30,10 @@ void main (void)
 
 	vec3 reflectdir = normalize( reflect(-lightdir, normal) );
 
-    finalcolor =  vec4(0.1,0.1,0.1,0) +
+    vec4 finalcolor =  vec4(0.1,0.1,0.1,0) +
 					kd * mylight_color * max( dot(lightdir, normal), 0.0) +
 					kd * mylight_color * pow( max( dot(reflectdir, eyedir), 0.0 ), 60 );
     if (type == 1) finalcolor = kd;
+
+	gl_FragColor = finalcolor;
 }

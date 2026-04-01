@@ -554,9 +554,9 @@ void keyboard(unsigned char key, int x, int y) {
 void initInterface(int argc, char *argv[]) {
   glutInit(&argc, argv);
 #ifdef __APPLE__
-  glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE | GLUT_3_2_CORE_PROFILE);
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE | GLUT_3_2_CORE_PROFILE);
 #else
-  glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
 #endif
   glutCreateWindow("My 4I-IG3 Application!");
 
@@ -695,11 +695,13 @@ GLuint initshaders(GLenum type, const char *filename) {
 }
 
 GLuint initprogram(GLuint vertexshader, GLuint fragmentshader) {
-  GLuint program = glCreateProgram();
-  GLint linked;
-  glAttachShader(program, vertexshader);
-  glAttachShader(program, fragmentshader);
-  glLinkProgram(program);
+  	GLuint program = glCreateProgram();
+	GLint linked;
+	glAttachShader(program, vertexshader);
+	glAttachShader(program, fragmentshader);
+	glBindAttribLocation(program, 0, "vertex_modelspace");
+	glBindAttribLocation(program, 1, "normal_modelspace");
+	glLinkProgram(program);
   glGetProgramiv(program, GL_LINK_STATUS, &linked);
   if (linked)
     glUseProgram(program);
