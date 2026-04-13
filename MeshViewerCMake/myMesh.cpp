@@ -71,14 +71,52 @@ bool myMesh::readFile(std::string filename) {
       myPoint3D *p = new myPoint3D(x, y, z);
       myVertex *v = new myVertex();
       v->point = p;
+      v->index = vertices.size();
       vertices.push_back(v);
     } else if (t == "mtllib") {
     } else if (t == "usemtl") {
     } else if (t == "s") {
     } else if (t == "f") {
       cout << "f";
+      vector<int> faceid;
       while (myline >> u)
-        cout << " " << atoi((u.substr(0, u.find("/"))).c_str());
+        faceid.push_back(atoi((u.substr(0, u.find("/"))).c_str()));
+        if(faceid.size() < 3)
+          continue;
+        myFace *face = new myFace();
+        faces.push_back(face);
+        int n = faceid.size();
+        vector<myHalfedge *> face_edges(n);
+            for (int i = 0; i < n; i++) {
+                myHalfedge *he = new myHalfedge();
+                he->source = vertices[faceids[i]];
+                he->adjacent_face = face;
+                face_edges[i] = he;
+                halfedges.push_back(he);
+
+                if (vertices[faceids[i]]->originof == NULL)
+                    vertices[faceids[i]]->originof = he;
+            }
+
+            face->adjacent_halfedge = face_edges[0];
+
+            for (int i = 0; i < n; i++) {
+                face_edges[i]->next = face_edges[(i + 1) % n];
+                face_edges[i]->prev = face_edges[(i - 1 + n) % n];
+            }
+
+            for (int i = 0; i < n; i++) {
+                int v1 = faceids[i];
+                int v2 = faceids[(i + 1) % n];
+                twin_map[{v1, v2}]= face_edges[i];
+
+                auto it = twin_map.find({v2, v1});
+                if (it != twin_map.end()) {
+                    face_edges[i]->twin  = it->second;
+                    it->second->twin= face_edges[i];
+                }
+            }
+        //cout << " " << atoi((u.substr(0, u.find("/"))).c_str());
       cout << endl;
     }
   }
