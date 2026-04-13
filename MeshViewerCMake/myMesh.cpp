@@ -78,14 +78,14 @@ bool myMesh::readFile(std::string filename) {
     } else if (t == "s") {
     } else if (t == "f") {
       cout << "f";
-      vector<int> faceid;
+      vector<int> faceids;
       while (myline >> u)
-        faceid.push_back(atoi((u.substr(0, u.find("/"))).c_str()));
-        if(faceid.size() < 3)
+        faceids.push_back(atoi((u.substr(0, u.find("/"))).c_str()) - 1  );
+        if(faceids.size() < 3)
           continue;
         myFace *face = new myFace();
         faces.push_back(face);
-        int n = faceid.size();
+        int n = faceids.size();
         vector<myHalfedge *> face_edges(n);
             for (int i = 0; i < n; i++) {
                 myHalfedge *he = new myHalfedge();
@@ -120,7 +120,7 @@ bool myMesh::readFile(std::string filename) {
       cout << endl;
     }
   }
-
+  
   checkMesh();
   normalize();
 
