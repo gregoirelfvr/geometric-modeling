@@ -257,6 +257,50 @@ void display() {
     glDrawElements(GL_LINES, m->halfedges.size() * 2, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
   }
+  if (drawnormals) {
+    glLineWidth(1.0);
+    // Set color to Blue (R=0, G=0, B=1)
+    color[0] = 0.0f, color[1] = 0.0f, color[2] = 1.0f, color[3] = 1.0f;
+    glUniform4fv(glGetUniformLocation(shaderprogram, "kd"), 1, &color[0]);
+
+    vector<float> normal_lines;
+    float scale = 0.05f; // Adjust this to make the "spikes" longer or shorter
+
+    for (auto v : m->vertices) {
+      // 1. The Start Point (The vertex position)
+      normal_lines.push_back(v->point->X);
+      normal_lines.push_back(v->point->Y);
+      normal_lines.push_back(v->point->Z);
+
+      // 2. The End Point (Position + Normal * Scale)
+      // Using the formula: P_end = P_start + (Normal * scale)
+      normal_lines.push_back(v->point->X + v->normal->dX * scale);
+      normal_lines.push_back(v->point->Y + v->normal->dY * scale);
+      normal_lines.push_back(v->point->Z + v->normal->dZ * scale);
+    }
+
+    if (!normal_lines.empty()) {
+      GLuint norm_vao, norm_vbo;
+      glGenVertexArrays(1, &norm_vao);
+      glGenBuffers(1, &norm_vbo);
+
+      glBindVertexArray(norm_vao);
+      glBindBuffer(GL_ARRAY_BUFFER, norm_vbo);
+      glBufferData(GL_ARRAY_BUFFER, normal_lines.size() * sizeof(float), &normal_lines[0], GL_STATIC_DRAW);
+
+      // Tell the shader that these are "position" coordinates (Attribute 0)
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+      glEnableVertexAttribArray(0);
+
+      // Draw the lines. We have 2 points per vertex, 3 floats per point.
+      glDrawArrays(GL_LINES, 0, normal_lines.size() / 3);
+
+      // Clean up so we don't leak memory on the GPU
+      glBindVertexArray(0);
+      glDeleteVertexArrays(1, &norm_vao);
+      glDeleteBuffers(1, &norm_vbo);
+    }
+  }
 
   if (drawsilhouette) {
     glLineWidth(4.0);

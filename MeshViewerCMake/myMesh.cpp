@@ -190,7 +190,10 @@ void myMesh::simplify() { /**** TODO ****/ }
 
 void myMesh::simplify(myVertex *) { /**** TODO ****/ }
 
-void myMesh::triangulate() { /**** TODO ****/ }
+void myMesh::triangulate() { /**** TODO ****/ 
+  //e = next next next (class notes for later)
+  
+}
 
 // return false if already triangle, true othewise.
 bool myMesh::triangulate(myFace *f) {
