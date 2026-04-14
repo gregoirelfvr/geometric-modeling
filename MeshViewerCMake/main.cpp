@@ -272,8 +272,14 @@ void display() {
       if ((*it)->twin == NULL)
         continue;
       myVertex *v2 = (*it)->twin->source;
-
-      if ( 0 /*ADD THE CONDITION TO CHECK IF THE HALFEDGE DEFINED BY (V1, V2) IS A SILHOUETTE EDGE*/ )
+      myVector3D toCamera(
+      camera_eye.X - v1->point->X,
+      camera_eye.Y - v1->point->Y,
+      camera_eye.Z - v1->point->Z
+      );
+      double d1 = *(e->adjacent_face->normal) * toCamera;
+      double d2 = *(e->twin->adjacent_face->normal) * toCamera;
+      if ( d1 * d2 < 0)
 			{
         silhouette_edges.push_back(v1->index);
         silhouette_edges.push_back(v2->index);
