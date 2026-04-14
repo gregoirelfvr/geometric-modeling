@@ -285,37 +285,39 @@ void display() {
         silhouette_edges.push_back(v2->index);
       }
     }
+    if (!silhouette_edges.empty()) {
+        // ✅ Create a VAO — required in Core Profile on Mac
+        GLuint sil_vao, sil_ebo;
+        glGenVertexArrays(1, &sil_vao);
+        glGenBuffers(1, &sil_ebo);
 
-    GLuint silhouette_edges_buffer;
-    glGenBuffers(1, &silhouette_edges_buffer);
+        glBindVertexArray(sil_vao);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, silhouette_edges_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 silhouette_edges.size() * sizeof(GLuint), &silhouette_edges[0],
-                 GL_STATIC_DRAW);
+        // Vertex positions (already uploaded in BUFFER_VERTICES)
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTICES]);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTICES]);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
+        // Normals (needed by shader even if unused for lines)
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_NORMALS_PERVERTEX]);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_NORMALS_PERVERTEX]);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(1);
+        // Upload silhouette index list
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sil_ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     silhouette_edges.size() * sizeof(GLuint),
+                     &silhouette_edges[0], GL_STATIC_DRAW);
 
-    glDrawElements(GL_LINES, silhouette_edges.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_LINES, silhouette_edges.size(), GL_UNSIGNED_INT, 0);
 
-    glDeleteBuffers(1, &silhouette_edges_buffer);
-  }
+        glBindVertexArray(0);
 
-  if (drawnormals && vaos[VAO_NORMALS]) {
-    glLineWidth(1.0);
-    color[0] = 0.2f, color[1] = 0.2f, color[2] = 0.2f, color[3] = 1.0f;
-    glUniform4fv(glGetUniformLocation(shaderprogram, "kd"), 1, &color[0]);
-
-    glBindVertexArray(vaos[VAO_NORMALS]);
-    glDrawArrays(GL_LINES, 0, m->vertices.size() * 2);
-    glBindVertexArray(0);
-  }
+        // Clean up temporary objects
+        glDeleteVertexArrays(1, &sil_vao);
+        glDeleteBuffers(1, &sil_ebo);
+    }
+}
 
   if (pickedpoint != NULL) {
     glUseProgram(0);
