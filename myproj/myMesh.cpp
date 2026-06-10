@@ -197,7 +197,61 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p) { /**** TODO ****/ }
 
 void myMesh::subdivisionCatmullClark() { /**** TODO ****/ }
 
-void myMesh::triangulate() { /**** TODO ****/ }
+void myMesh::triangulate() {
+  /**** TODO ****/
+  vector<myFace *> remaining_faces(faces.begin(), faces.end());
+  for (myFace *f : remaining_faces) {
+    while (triangulate(f)) {
+      // anchor + part of soon to be triangle
+      myHalfedge *h0 = f->adjacent_halfedge;
+      myHalfedge *h1 = h0->next;
+      myHalfedge *h2 = h1->next;
+
+      // new halfedge and it's twin
+      myHalfedge *new_he = new myHalfedge;
+      new_he->source = h2->source;
+      new_he->adjacent_face = f;
+      new_he->next = h0;
+      new_he->prev = h1;
+
+      myHalfedge *new_he_twin = new myHalfedge;
+      new_he_twin->source = h0->source;
+      new_he_twin->next = h2;
+      // new_he_twin->prev = ;
+
+      new_he->twin = new_he_twin;
+      new_he_twin->twin = new_he;
+
+      // triangle
+      myFace *new_face = new myFace;
+      new_face->adjacent_halfedge = h0;
+      h1->next = new_he;
+
+      h0->prev = new_he;
+
+      h0->adjacent_face = new_face;
+      h1->adjacent_face = new_face;
+      new_he->adjacent_face = new_face;
+
+      // old face
+      f->adjacent_halfedge = new_he_twin;
+      new_he_twin->next = h2;
+      // loop to find last he to link the previous for new_he_twin
+      myHalfedge *last = f->adjacent_halfedge;
+      while (last->next != h0)
+        last = last->next;
+      last->next = new_he_twin;
+      new_he_twin->prev = last;
+      new_he_twin->adjacent_face = f;
+      // all the remaining he are all linked to f still
+      // only h0, h1 needed to change
+
+      halfedges.push_back(new_he);
+      halfedges.push_back(new_he_twin);
+      faces.push_back(new_face);
+    }
+  }
+}
 
 // return false if already triangle, true othewise.
 bool myMesh::triangulate(myFace *f) {
