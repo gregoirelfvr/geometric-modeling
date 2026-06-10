@@ -240,6 +240,7 @@ void display() {
   }
 
   if (drawmeshvertices && vaos[VAO_VERTICES]) {
+    glUniform1i(glGetUniformLocation(shaderprogram, "type"), 1);
     glPointSize(4.0);
     color[0] = 0.0f, color[1] = 0.0f, color[2] = 0.0f, color[3] = 1.0f;
     glUniform4fv(glGetUniformLocation(shaderprogram, "kd"), 1, &color[0]);
@@ -247,17 +248,21 @@ void display() {
     glBindVertexArray(vaos[VAO_VERTICES]);
     glDrawElements(GL_POINTS, m->vertices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+    glUniform1i(glGetUniformLocation(shaderprogram, "type"), 0);
   }
 
   if (drawwireframe && vaos[VAO_EDGES]) {
+    glUniform1i(glGetUniformLocation(shaderprogram, "type"), 1);
     glLineWidth(2.0);
     color[0] = 0.0f, color[1] = 0.0f, color[2] = 0.0f, color[3] = 1.0f;
     glUniform4fv(glGetUniformLocation(shaderprogram, "kd"), 1, &color[0]);
     glBindVertexArray(vaos[VAO_EDGES]);
     glDrawElements(GL_LINES, m->halfedges.size() * 2, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+    glUniform1i(glGetUniformLocation(shaderprogram, "type"), 0);
   }
   if (drawnormals) {
+    glUniform1i(glGetUniformLocation(shaderprogram, "type"), 1);
     glLineWidth(1.0);
     // Set color to Blue (R=0, G=0, B=1)
     color[0] = 0.0f, color[1] = 0.0f, color[2] = 1.0f, color[3] = 1.0f;
@@ -277,6 +282,7 @@ void display() {
       normal_lines.push_back(v->point->X + v->normal->dX * scale);
       normal_lines.push_back(v->point->Y + v->normal->dY * scale);
       normal_lines.push_back(v->point->Z + v->normal->dZ * scale);
+      glUniform1i(glGetUniformLocation(shaderprogram, "type"), 0);
     }
 
     if (!normal_lines.empty()) {
@@ -286,7 +292,8 @@ void display() {
 
       glBindVertexArray(norm_vao);
       glBindBuffer(GL_ARRAY_BUFFER, norm_vbo);
-      glBufferData(GL_ARRAY_BUFFER, normal_lines.size() * sizeof(float), &normal_lines[0], GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, normal_lines.size() * sizeof(float),
+                   &normal_lines[0], GL_STATIC_DRAW);
 
       // Tell the shader that these are "position" coordinates (Attribute 0)
       glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -316,52 +323,49 @@ void display() {
       if ((*it)->twin == NULL)
         continue;
       myVertex *v2 = (*it)->twin->source;
-      myVector3D toCamera(
-      camera_eye.X - v1->point->X,
-      camera_eye.Y - v1->point->Y,
-      camera_eye.Z - v1->point->Z
-      );
+      myVector3D toCamera(camera_eye.X - v1->point->X,
+                          camera_eye.Y - v1->point->Y,
+                          camera_eye.Z - v1->point->Z);
       double d1 = *(e->adjacent_face->normal) * toCamera;
       double d2 = *(e->twin->adjacent_face->normal) * toCamera;
-      if ( d1 * d2 < 0)
-			{
+      if (d1 * d2 < 0) {
         silhouette_edges.push_back(v1->index);
         silhouette_edges.push_back(v2->index);
       }
     }
     if (!silhouette_edges.empty()) {
-        // ✅ Create a VAO — required in Core Profile on Mac
-        GLuint sil_vao, sil_ebo;
-        glGenVertexArrays(1, &sil_vao);
-        glGenBuffers(1, &sil_ebo);
+      // ✅ Create a VAO — required in Core Profile on Mac
+      GLuint sil_vao, sil_ebo;
+      glGenVertexArrays(1, &sil_vao);
+      glGenBuffers(1, &sil_ebo);
 
-        glBindVertexArray(sil_vao);
+      glBindVertexArray(sil_vao);
 
-        // Vertex positions (already uploaded in BUFFER_VERTICES)
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTICES]);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(0);
+      // Vertex positions (already uploaded in BUFFER_VERTICES)
+      glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTICES]);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+      glEnableVertexAttribArray(0);
 
-        // Normals (needed by shader even if unused for lines)
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_NORMALS_PERVERTEX]);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(1);
+      // Normals (needed by shader even if unused for lines)
+      glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_NORMALS_PERVERTEX]);
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+      glEnableVertexAttribArray(1);
 
-        // Upload silhouette index list
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sil_ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     silhouette_edges.size() * sizeof(GLuint),
-                     &silhouette_edges[0], GL_STATIC_DRAW);
+      // Upload silhouette index list
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sil_ebo);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                   silhouette_edges.size() * sizeof(GLuint),
+                   &silhouette_edges[0], GL_STATIC_DRAW);
 
-        glDrawElements(GL_LINES, silhouette_edges.size(), GL_UNSIGNED_INT, 0);
+      glDrawElements(GL_LINES, silhouette_edges.size(), GL_UNSIGNED_INT, 0);
 
-        glBindVertexArray(0);
+      glBindVertexArray(0);
 
-        // Clean up temporary objects
-        glDeleteVertexArrays(1, &sil_vao);
-        glDeleteBuffers(1, &sil_ebo);
+      // Clean up temporary objects
+      glDeleteVertexArrays(1, &sil_vao);
+      glDeleteBuffers(1, &sil_ebo);
     }
-}
+  }
 
   if (pickedpoint != NULL) {
     glUseProgram(0);
@@ -438,7 +442,7 @@ void initMesh() {
 
   cout << "Reading mesh from file...\n";
   m = new myMesh();
-  if (m->readFile("hand.obj")) {
+  if (m->readFile("cube.obj")) {
     m->computeNormals();
     makeBuffers(m);
   }
@@ -446,9 +450,7 @@ void initMesh() {
 
 int main(int argc, char *argv[]) {
   initInterface(argc, argv);
-
   initMesh();
-
   glutMainLoop();
   return 0;
 }

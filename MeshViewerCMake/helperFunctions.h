@@ -1,5 +1,5 @@
 #pragma once
-
+#define GL_SILENCE_DEPRECATION
 #include <GL/glew.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -12,7 +12,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <string>
-
 
 void menu(int item);
 GLuint initshaders(GLenum type, const char *filename);
@@ -38,6 +37,7 @@ float fps = 0;
 
 int button_pressed = 0; // 1 if a button is currently being pressed.
 int GLUTmouse[2] = {0, 0};
+int modifier_state = 0;
 
 #define NUM_BUFFERS 10
 vector<GLuint> buffers(NUM_BUFFERS, 0);
@@ -416,8 +416,8 @@ void mouse(int button, int state, int x, int y) {
   // Remember mouse position
   GLUTmouse[0] = x;
   GLUTmouse[1] = Glut_h - y;
-
   int mode = glutGetModifiers();
+  modifier_state = mode;
   // Process mouse button event
   if (state == GLUT_DOWN) {
     if (button == GLUT_LEFT_BUTTON) {
@@ -454,7 +454,7 @@ void mousedrag(int x, int y) {
   GLUTmouse[0] = x;
   GLUTmouse[1] = y;
 
-  if (glutGetModifiers() == GLUT_ACTIVE_SHIFT)
+  if (modifier_state == GLUT_ACTIVE_SHIFT)
     return;
   if ((dx == 0 && dy == 0) || !button_pressed)
     return;
@@ -554,7 +554,8 @@ void keyboard(unsigned char key, int x, int y) {
 void initInterface(int argc, char *argv[]) {
   glutInit(&argc, argv);
 #ifdef __APPLE__
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE | GLUT_3_2_CORE_PROFILE);
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE |
+                      GLUT_3_2_CORE_PROFILE);
 #else
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
 #endif
@@ -695,13 +696,13 @@ GLuint initshaders(GLenum type, const char *filename) {
 }
 
 GLuint initprogram(GLuint vertexshader, GLuint fragmentshader) {
-  	GLuint program = glCreateProgram();
-	GLint linked;
-	glAttachShader(program, vertexshader);
-	glAttachShader(program, fragmentshader);
-	glBindAttribLocation(program, 0, "vertex_modelspace");
-	glBindAttribLocation(program, 1, "normal_modelspace");
-	glLinkProgram(program);
+  GLuint program = glCreateProgram();
+  GLint linked;
+  glAttachShader(program, vertexshader);
+  glAttachShader(program, fragmentshader);
+  glBindAttribLocation(program, 0, "vertex_modelspace");
+  glBindAttribLocation(program, 1, "normal_modelspace");
+  glLinkProgram(program);
   glGetProgramiv(program, GL_LINK_STATUS, &linked);
   if (linked)
     glUseProgram(program);

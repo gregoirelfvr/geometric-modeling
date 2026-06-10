@@ -1,18 +1,18 @@
 #include "myMesh.h"
+#include "myVector3D.h"
+#include <GL/glew.h>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <utility>
 
-// #include <GL/glew.h>
-#include "myVector3D.h"
-
 using namespace std;
 
-myMesh::myMesh(void) { /**** TODO ****/ }
+myMesh::myMesh(void) {}
 
-myMesh::~myMesh(void) { /**** TODO ****/ }
+myMesh::~myMesh(void) { clear(); }
 
 void myMesh::clear() {
   for (unsigned int i = 0; i < vertices.size(); i++)
@@ -197,16 +197,11 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p) { /**** TODO ****/ }
 
 void myMesh::subdivisionCatmullClark() { /**** TODO ****/ }
 
-void myMesh::simplify() { /**** TODO ****/ }
-
-void myMesh::simplify(myVertex *) { /**** TODO ****/ }
-
-void myMesh::triangulate() { /**** TODO ****/
-  // e = next next next (class notes for later)
-}
+void myMesh::triangulate() { /**** TODO ****/ }
 
 // return false if already triangle, true othewise.
 bool myMesh::triangulate(myFace *f) {
+  /**** TODO ****/
   if (f->adjacent_halfedge->next->next->next == f->adjacent_halfedge) {
     return false;
   }

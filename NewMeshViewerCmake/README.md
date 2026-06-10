@@ -1,5 +1,3 @@
-# geometric-modeling
-
 # Mesh Viewer (OpenGL 3.3 + SDL2)
 
 Cross-platform CMake build (Windows, Linux, macOS) with modern OpenGL rendering/picking and SDL2 window/input layer.
