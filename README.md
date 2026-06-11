@@ -59,7 +59,7 @@ Reads 3D mesh data from a `.obj` file and builds a fully connected half-edge mes
 6. **Finalizing:** Calls `checkMesh()` to ensure all edges have a twin (i.e. the mesh has no open boundary/cracks) and `normalize()` to center and scale the model.
 
 > **Visual Space:**
-> ![Mesh Loading Visual](../images/mesh_loaded.png)
+> ![Mesh Loading Visual](myproj/images/mesh_loaded.png)
 
 ---
 
@@ -83,7 +83,7 @@ Computes directional vectors (normals) perpendicular to faces (flat shading) and
   - Iterates through all faces to compute face-level normals, then iterates through all vertices to compute vertex-level normals.
 
 > **Visual Space (Flat vs Smooth Shading):**
-> ![Normals Shading Visual](./images/normals.png)
+> ![Normals Shading Visual](myproj/images/normal.png)
 
 ---
 
@@ -101,7 +101,7 @@ Identifies and draws the boundary outlines (silhouettes) of the 3D model relativ
 4. **Drawing:** If this condition is met, the coordinates of `v1` and `v2` are pushed to a vertex buffer and drawn on screen as a thick red overlay line.
 
 > **Visual Space:**
-> ![Silhouette Render](./images/silouette.png)
+> ![Silhouette Render](myproj/images/silouette.png)
 
 ---
 
@@ -124,7 +124,7 @@ Converts non-triangular faces (polygons with 4 or more vertices) into triangles,
     - Updates the original face `f` to bypass the clipped ear by linking it to `new_he_twin` and the remaining boundary edges.
 
 > **Visual Space:**
-> ![Triangulation Visual](./images/triangulation_mesh.png)
+> ![Triangulation Visual](myproj/images/triangulation_mesh.png)
 
 ---
 
@@ -148,7 +148,7 @@ Inserts a new vertex `p` inside a triangular face `f` and subdivides it into thr
 6. **Database Update:** Pushes the new edges and new faces to the mesh database.
 
 > **Visual Space:**
-> ![Split Face TRIS Visual](./images/split_edges.png)
+> ![Split Face TRIS Visual](myproj/images/split_edges.png)
 
 ---
 
@@ -169,7 +169,7 @@ Subdivides an existing edge (and its twin edge) into two segments by inserting a
 5. **Database Update:** Appends the new half-edges to the mesh database.
 
 > **Visual Space:**
-> ![Split Edge Visual](./images/split_edges.png)
+> ![Split Edge Visual](myproj/images/split_edges.png)
 
 ---
 
@@ -196,5 +196,5 @@ Subdivides a quadrilateral face into four smaller quadrilaterals by placing a ne
 7. **Database Update:** Registers the new half-edges and faces in the mesh data structures.
 
 > **Visual Space:**
-> ![Split Quads Visual](./images/split_edges.png)
+> ![Split Quads Visual](myproj/images/split_edges.png)
 
