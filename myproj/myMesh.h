@@ -21,6 +21,7 @@ public:
 	void subdivisionCatmullClark();
 
 	void surfaceOfRevolution();
+	int ringSize(myFace *f);
 
 	void splitFaceTRIS(myFace *, myPoint3D *);
 
@@ -29,6 +30,7 @@ public:
 
 	void triangulate();
 	bool triangulate(myFace *);
+	
 
 	void clear();
 

@@ -884,7 +884,7 @@ void initMesh() {
   closest_face = NULL;
 
   m = new myMesh();
-  if (m->readFile(resolve_resource_path("obj/c_gear.obj"))) {
+  if (m->readFile(resolve_resource_path("obj/cube.obj"))) {
     m->computeNormals();
     makeBuffers(m);
   }

@@ -189,7 +189,89 @@ void myMesh::normalize() {
   }
 }
 
-void myMesh::splitFaceTRIS(myFace *f, myPoint3D *p) { /**** TODO ****/ }
+void myMesh::splitFaceTRIS(myFace *f, myPoint3D *p) { 
+  /**** TODO ****/ 
+  myVertex *vP = new myVertex;
+  vP->point = p;
+  vertices.push_back(vP);
+
+  // 6 new halfedges (e0, e1, e2 + their twins) and 2 new faces (f1, f2)
+  // old halfedges of the face f
+  myHalfedge *h0 = f->adjacent_halfedge;
+  myHalfedge *h1 = h0->next;
+  myHalfedge *h2 = h1->next;
+
+  // 6 new halfedges (2 per triangle, going to and from p)
+  myHalfedge *e0 = new myHalfedge(); 
+  myHalfedge *e0_twin = new myHalfedge(); 
+  myHalfedge *e1 = new myHalfedge(); 
+  myHalfedge *e1_twin = new myHalfedge(); 
+  myHalfedge *e2 = new myHalfedge(); 
+  myHalfedge *e2_twin = new myHalfedge(); 
+
+  // sources
+  e0->source = h1->source;
+  e0_twin->source = vP;
+  e1->source = h2->source;
+  e1_twin->source = vP;
+  e2->source = h0->source;
+  e2_twin->source = vP;
+
+  // twin 
+  e0->twin = e0_twin; 
+  e0_twin->twin = e0;
+  e1->twin = e1_twin; 
+  e1_twin->twin = e1;
+  e2->twin = e2_twin; 
+  e2_twin->twin = e2;
+
+  //new faces
+  myFace *f1 = new myFace();
+  myFace *f2 = new myFace();
+
+  // triangle 1
+  f->adjacent_halfedge = h0;
+  h0->next = e0; e0->prev = h0;
+  e0->next = e0_twin; e0_twin->prev = e0;
+  e0_twin->next = h0; h0->prev = e0_twin;
+  h0->adjacent_face = f;
+  e0->adjacent_face = f;
+  e0_twin->adjacent_face = f;
+
+  // triangle 2
+  f1->adjacent_halfedge = h1;
+  h1->next = e1; e1->prev = h1;
+  e1->next = e1_twin; e1_twin->prev = e1;
+  e1_twin->next = h1; h1->prev = e1_twin;
+  h1->adjacent_face = f1;
+  e1->adjacent_face = f1;
+  e1_twin->adjacent_face = f1;
+
+  // triangle 3
+  f2->adjacent_halfedge = h2;
+  h2->next = e2; e2->prev = h2;
+  e2->next = e2_twin; e2_twin->prev = e2;
+  e2_twin->next = h2; h2->prev = e2_twin;
+  h2->adjacent_face = f2;
+  e2->adjacent_face = f2;
+  e2_twin->adjacent_face = f2;
+
+  //twin
+  e0->twin = e2_twin; 
+  e2_twin->twin = e0;
+  e1->twin = e0_twin; 
+  e0_twin->twin = e1;
+  e2->twin = e1_twin; 
+  e1_twin->twin = e2;
+
+  vP->originof = e0;
+
+  halfedges.push_back(e0); halfedges.push_back(e0_twin);
+  halfedges.push_back(e1); halfedges.push_back(e1_twin);
+  halfedges.push_back(e2); halfedges.push_back(e2_twin);
+  faces.push_back(f1);
+  faces.push_back(f2);
+}
 
 void myMesh::splitEdge(myHalfedge *e1, myPoint3D *p) { 
   /**** TODO ****/ 
@@ -203,10 +285,6 @@ void myMesh::splitEdge(myHalfedge *e1, myPoint3D *p) {
   myHalfedge *old_twin = e1->twin;
   myHalfedge *old_e1_next = e1->next;
   myHalfedge *old_twin_next = old_twin->next;
-
-  // new halfedges
-  myHalfedge *e2 = new myHalfedge();
-  myHalfedge *e2_twin = new myHalfedge();
 
   // e2
   e2->source = vP;
@@ -239,9 +317,167 @@ void myMesh::splitEdge(myHalfedge *e1, myPoint3D *p) {
   halfedges.push_back(e2_twin);
 }
 
-void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p) { /**** TODO ****/ }
+//temp
+int myMesh::ringSize(myFace *f) {
+    int count = 0;
+    myHalfedge *cur = f->adjacent_halfedge;
+    do { count++; cur = cur->next; } while (cur != f->adjacent_halfedge);
+    return count;
+}
 
-void myMesh::subdivisionCatmullClark() { /**** TODO ****/ }
+void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p) { 
+  /**** TODO ****/ 
+
+  myVertex *vP = new myVertex;
+  vP->point = p;
+  vertices.push_back(vP);
+
+  // + 3 faces and + 16 new halfedges 
+  //old halfedges of the face f
+  myHalfedge *h0 = f->adjacent_halfedge;
+  myHalfedge *h1 = h0->next;
+  myHalfedge *h2 = h1->next;
+  myHalfedge *h3 = h2->next;
+
+  //splitting the edges of the quad 
+  myPoint3D *m0 = new myPoint3D(
+      (h0->source->point->X + h1->source->point->X) / 2,
+      (h0->source->point->Y + h1->source->point->Y) / 2,
+      (h0->source->point->Z + h1->source->point->Z) / 2
+  );
+  //cout << "before any split: " << ringSize(f) << endl; debug
+  splitEdge(h0, m0);
+  myHalfedge *s0 = h0->next;
+  //cout << "after split 0: " << ringSize(f) << endl; debug 
+  myPoint3D *m1 = new myPoint3D(
+      (h1->source->point->X + h2->source->point->X) / 2,
+      (h1->source->point->Y + h2->source->point->Y) / 2,
+      (h1->source->point->Z + h2->source->point->Z) / 2
+  );
+  splitEdge(h1, m1);
+  myHalfedge *s1 = h1->next;
+  myPoint3D *m2 = new myPoint3D(
+      (h2->source->point->X + h3->source->point->X) / 2,
+      (h2->source->point->Y + h3->source->point->Y) / 2,
+      (h2->source->point->Z + h3->source->point->Z) / 2
+  );
+  splitEdge(h2, m2);
+  myHalfedge *s2 = h2->next;
+  myPoint3D *m3 = new myPoint3D(
+      (h3->source->point->X + h0->source->point->X) / 2,
+      (h3->source->point->Y + h0->source->point->Y) / 2,
+      (h3->source->point->Z + h0->source->point->Z) / 2
+  );
+  splitEdge(h3, m3);
+  myHalfedge *s3 = h3->next;
+
+  // 
+    myHalfedge *in0 = new myHalfedge(); // s0->source → vP
+    myHalfedge *out0 = new myHalfedge(); // vP → h0->source
+    myHalfedge *in1 = new myHalfedge(); // s1->source → vP
+    myHalfedge *out1 = new myHalfedge(); // vP → h1->source
+    myHalfedge *in2 = new myHalfedge(); // s2->source → vP
+    myHalfedge *out2 = new myHalfedge(); // vP → h2->source
+    myHalfedge *in3 = new myHalfedge(); // s3->source → vP
+    myHalfedge *out3 = new myHalfedge(); // vP → h3->source
+
+    // source
+    in0->source = s0->source;
+    out0->source = vP;
+    in1->source = s1->source;
+    out1->source = vP;
+    in2->source = s2->source;
+    out2->source = vP;
+    in3->source = s3->source;
+    out3->source = vP;
+
+    // twin
+    in0->twin = out2; out2->twin = in0;
+    in1->twin = out3; out3->twin = in1;
+    in2->twin = out0; out0->twin = in2;
+    in3->twin = out1; out1->twin = in3;
+
+    // 3 new faces + f
+    myFace *f1 = new myFace();
+    myFace *f2 = new myFace();
+    myFace *f3 = new myFace();
+
+    // quad 0
+    f->adjacent_halfedge = h0;
+    h0->next = s0;   
+    s0->prev = h0;
+    s0->next = in0;  
+    in0->prev = s0;
+    in0->next = out0; 
+    out0->prev = in0;
+    out0->next = h0; 
+    h0->prev = out0;
+    h0->adjacent_face = f;
+    s0->adjacent_face = f;
+    in0->adjacent_face = f;
+    out0->adjacent_face = f;
+
+    // quad 1
+    f1->adjacent_halfedge = h1;
+    h1->next = s1;   
+    s1->prev = h1;
+    s1->next = in1;  
+    in1->prev = s1;
+    in1->next = out1; 
+    out1->prev = in1;
+    out1->next = h1; 
+    h1->prev = out1;
+    h1->adjacent_face = f1;
+    s1->adjacent_face = f1;
+    in1->adjacent_face = f1;
+    out1->adjacent_face = f1;
+
+    // quad 2
+    f2->adjacent_halfedge = h2;
+    h2->next = s2;   
+    s2->prev = h2;
+    s2->next = in2;  
+    in2->prev = s2;
+    in2->next = out2; 
+    out2->prev = in2;
+    out2->next = h2; 
+    h2->prev = out2;
+    h2->adjacent_face = f2;
+    s2->adjacent_face = f2;
+    in2->adjacent_face = f2;
+    out2->adjacent_face = f2;
+
+    // quad 3
+    f3->adjacent_halfedge = h3;
+    h3->next = s3;   s3->prev = h3;
+    s3->next = in3;  in3->prev = s3;
+    in3->next = out3; out3->prev = in3;
+    out3->next = h3; h3->prev = out3;
+    h3->adjacent_face = f3;
+    s3->adjacent_face = f3;
+    in3->adjacent_face = f3;
+    out3->adjacent_face = f3;
+
+    vP->originof = out0;
+
+    halfedges.push_back(in0);  
+    halfedges.push_back(out0);
+    halfedges.push_back(in1);  
+    halfedges.push_back(out1);
+    halfedges.push_back(in2);  
+    halfedges.push_back(out2);
+    halfedges.push_back(in3);  
+    halfedges.push_back(out3);
+    faces.push_back(f1);
+    faces.push_back(f2);
+    faces.push_back(f3);
+}
+
+void myMesh::subdivisionCatmullClark() { 
+  /**** TODO ****/
+  splitFaceQUADS(faces[0], new myPoint3D(0, 0, 0));
+
+}
 
 void myMesh::surfaceOfRevolution() { /**** TODO ****/ }
 
@@ -372,3 +608,4 @@ bool myMesh::triangulate(myFace *f) {
   }
   return true;
 }
+
