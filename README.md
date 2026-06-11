@@ -168,8 +168,6 @@ Subdivides an existing edge (and its twin edge) into two segments by inserting a
    - `e2`'s twin becomes `old_twin` (representing the second half of the split edge).
 5. **Database Update:** Appends the new half-edges to the mesh database.
 
-> **Visual Space:**
-> ![Split Edge Visual](myproj/images/split_edges.png)
 
 ---
 
@@ -195,6 +193,4 @@ Subdivides a quadrilateral face into four smaller quadrilaterals by placing a ne
    - `in3->twin = out1`
 7. **Database Update:** Registers the new half-edges and faces in the mesh data structures.
 
-> **Visual Space:**
-> ![Split Quads Visual](myproj/images/split_edges.png)
 
