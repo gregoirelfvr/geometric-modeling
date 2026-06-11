@@ -202,8 +202,51 @@ void myMesh::triangulate() {
   vector<myFace *> remaining_faces(faces.begin(), faces.end());
   for (myFace *f : remaining_faces) {
     while (triangulate(f)) {
-      // anchor + part of soon to be triangle
-      myHalfedge *h0 = f->adjacent_halfedge;
+      //Ear clipping 
+      //loop to get he of the faces
+      vector<myHalfedge *> face_he;
+      myHalfedge *he = f->adjacent_halfedge;
+      do {
+        face_he.push_back(he);
+        he = he->next;
+      } while (he != f->adjacent_halfedge);
+      int size = face_he.size();
+
+      //convex check
+      int index = -1;
+      bool isValidEar = false;
+      for (size_t i = 0; i < size; i++){
+
+        myPoint3D *p1 = face_he[(i-1 + size) % size]->source->point;
+        myPoint3D *p2 = face_he[i]->source->point;
+        myPoint3D *p3 = face_he[(i+1) % size]->source->point;
+
+        double crossProduct = (p2->X - p1->X) * (p3->Y - p1->Y) - (p2->Y - p1->Y) * (p3->X - p1->X);
+        if (crossProduct > 0) {
+          bool isValidEar = true;
+          for (int j = 0; j < size; j++) {
+            if (j == i || j == (i - 1 + size) % size || j == (i + 1) % size)
+              continue;
+
+          myPoint3D *p = face_he[j]->source->point;
+          double c1 = (p2->X - p1->X) * (p->Y - p1->Y) - (p2->Y - p1->Y) * (p->X - p1->X);
+          double c2 = (p3->X - p2->X) * (p->Y - p2->Y) - (p3->Y - p2->Y) * (p->X - p2->X);
+          double c3 = (p1->X - p3->X) * (p->Y - p3->Y) - (p1->Y - p3->Y) * (p->X - p3->X);
+    
+          if (c1 >= 0 && c2 >= 0 && c3 >= 0) {
+                  isValidEar = false;
+                  break;
+              }
+          }
+          if (isValidEar) {
+              index = i;
+              break;
+          }
+        }
+      }
+      if (index == -1) index = 0; 
+      // anchor + part of soon to be triangle (now ear)
+      myHalfedge *h0 = face_he[(index-1 + size) % size];
       myHalfedge *h1 = h0->next;
       myHalfedge *h2 = h1->next;
 
