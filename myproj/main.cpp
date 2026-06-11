@@ -695,16 +695,16 @@ void menu(int item) {
     break;
   }
   case MENU_GENERATE: {
-    m->clear(); 
+    m->clear();
     clear();
     std::vector<myPoint3D> profile;
-    profile.push_back(myPoint3D(0.2, 0.0, 0.0)); 
-    profile.push_back(myPoint3D(0.25, 0.3, 0.0)); 
-    profile.push_back(myPoint3D(0.15, 0.5, 0.0)); 
-    profile.push_back(myPoint3D(0.2, 0.6, 0.0)); 
-    profile.push_back(myPoint3D(0.12, 0.8, 0.0)); 
-    profile.push_back(myPoint3D(0.03, 0.9, 0.0)); 
-    
+    profile.push_back(myPoint3D(0.2, 0.0, 0.0));
+    profile.push_back(myPoint3D(0.25, 0.3, 0.0));
+    profile.push_back(myPoint3D(0.15, 0.5, 0.0));
+    profile.push_back(myPoint3D(0.2, 0.6, 0.0));
+    profile.push_back(myPoint3D(0.12, 0.8, 0.0));
+    profile.push_back(myPoint3D(0.03, 0.9, 0.0));
+
     m->surfaceOfRevolution(profile, 32);
     clear();
     m->computeNormals();
@@ -907,7 +907,7 @@ void initMesh() {
   closest_face = NULL;
 
   m = new myMesh();
-  if (m->readFile(resolve_resource_path("obj/cube.obj"))) {
+  if (m->readFile(resolve_resource_path("obj/c_gear.obj"))) {
     m->computeNormals();
     makeBuffers(m);
   }
