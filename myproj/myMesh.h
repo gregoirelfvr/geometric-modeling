@@ -20,6 +20,8 @@ public:
 
 	void subdivisionCatmullClark();
 
+	void surfaceOfRevolution();
+
 	void splitFaceTRIS(myFace *, myPoint3D *);
 
 	void splitEdge(myHalfedge *, myPoint3D *);

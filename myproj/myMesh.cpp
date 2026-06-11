@@ -191,11 +191,59 @@ void myMesh::normalize() {
 
 void myMesh::splitFaceTRIS(myFace *f, myPoint3D *p) { /**** TODO ****/ }
 
-void myMesh::splitEdge(myHalfedge *e1, myPoint3D *p) { /**** TODO ****/ }
+void myMesh::splitEdge(myHalfedge *e1, myPoint3D *p) { 
+  /**** TODO ****/ 
+  myHalfedge *e2 = new myHalfedge;
+  myHalfedge *e2_twin = new myHalfedge;
+
+  myVertex *vP = new myVertex;
+  vP->point = p;
+  vertices.push_back(vP);
+
+  myHalfedge *old_twin = e1->twin;
+  myHalfedge *old_e1_next = e1->next;
+  myHalfedge *old_twin_next = old_twin->next;
+
+  // new halfedges
+  myHalfedge *e2 = new myHalfedge();
+  myHalfedge *e2_twin = new myHalfedge();
+
+  // e2
+  e2->source = vP;
+  e2->next = old_e1_next;
+  e2->prev = e1;
+  e2->twin = old_twin;
+  e2->adjacent_face = e1->adjacent_face;
+  old_e1_next->prev = e2;
+
+  // old_twin
+  // source = v2
+  old_twin->next = e2_twin;
+  old_twin->twin = e2;
+
+  // e2_twin 
+  e2_twin->source = vP;
+  e2_twin->next = old_twin_next;
+  e2_twin->prev = old_twin;
+  e2_twin->twin = e1;
+  e2_twin->adjacent_face = old_twin->adjacent_face;
+  old_twin_next->prev = e2_twin;
+
+  // update e1
+  e1->next = e2;
+  e1->twin = e2_twin;
+  // e1->source = v1
+
+  vP->originof = e2;
+  halfedges.push_back(e2);
+  halfedges.push_back(e2_twin);
+}
 
 void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p) { /**** TODO ****/ }
 
 void myMesh::subdivisionCatmullClark() { /**** TODO ****/ }
+
+void myMesh::surfaceOfRevolution() { /**** TODO ****/ }
 
 void myMesh::triangulate() {
   /**** TODO ****/
@@ -203,50 +251,66 @@ void myMesh::triangulate() {
   for (myFace *f : remaining_faces) {
     while (triangulate(f)) {
       //Ear clipping 
-      //loop to get he of the faces
-      vector<myHalfedge *> face_he;
-      myHalfedge *he = f->adjacent_halfedge;
+      //normal fix since the triangulate wasn't working well for back faces
+      myVector3D face_normal(0, 0, 0);
+      myHalfedge *cur = f->adjacent_halfedge;
       do {
-        face_he.push_back(he);
+          myPoint3D *c = cur->source->point;
+          myPoint3D *n = cur->next->source->point;
+          face_normal.dX += (c->Y - n->Y) * (c->Z + n->Z);
+          face_normal.dY += (c->Z - n->Z) * (c->X + n->X);
+          face_normal.dZ += (c->X - n->X) * (c->Y + n->Y);
+          cur = cur->next;
+      } while (cur != f->adjacent_halfedge);
+
+
+      vector<myHalfedge *> face_he;
+      myHalfedge *h0 = f->adjacent_halfedge;
+      myHalfedge *he = f->adjacent_halfedge;
+
+      do {
+        myPoint3D *a = he->source->point;
+        myPoint3D *b = he->next->source->point;
+        myPoint3D *c = he->next->next->source->point;
+        
+        myVector3D ab(b->X-a->X, b->Y-a->Y, b->Z-a->Z);
+        myVector3D bc(c->X-b->X, c->Y-b->Y, c->Z-b->Z);
+        myVector3D cross; 
+        
+        cross.crossproduct(ab, bc);
+        double dot = cross.dX*face_normal.dX + cross.dY*face_normal.dY + cross.dZ*face_normal.dZ;
+
+        if (dot > 0) {
+            bool isValidEar = true;
+            myHalfedge *temp = he->next->next->next;
+            while (temp != he) {
+                myPoint3D *p = temp->source->point;
+                myVector3D ap(p->X-a->X, p->Y-a->Y, p->Z-a->Z);
+                myVector3D bp(p->X-b->X, p->Y-b->Y, p->Z-b->Z);
+                myVector3D cp(p->X-c->X, p->Y-c->Y, p->Z-c->Z);
+                myVector3D c1; 
+                c1.crossproduct(ab, ap);
+                myVector3D edge_bc(c->X-b->X, c->Y-b->Y, c->Z-b->Z);
+                myVector3D c2; 
+                c2.crossproduct(edge_bc, bp);
+                myVector3D ca(a->X-c->X, a->Y-c->Y, a->Z-c->Z);
+                myVector3D c3; 
+                c3.crossproduct(ca, cp);
+
+                double d1 = c1.dX*face_normal.dX + c1.dY*face_normal.dY + c1.dZ*face_normal.dZ;
+                double d2 = c2.dX*face_normal.dX + c2.dY*face_normal.dY + c2.dZ*face_normal.dZ;
+                double d3 = c3.dX*face_normal.dX + c3.dY*face_normal.dY + c3.dZ*face_normal.dZ;
+                
+                if (d1 >= 0 && d2 >= 0 && d3 >= 0) { 
+                  isValidEar = false; break; 
+                }
+                temp = temp->next;
+            }
+            if (isValidEar) { h0 = he; break; }
+          }
         he = he->next;
       } while (he != f->adjacent_halfedge);
-      int size = face_he.size();
 
-      //convex check
-      int index = -1;
-      bool isValidEar = false;
-      for (size_t i = 0; i < size; i++){
-
-        myPoint3D *p1 = face_he[(i-1 + size) % size]->source->point;
-        myPoint3D *p2 = face_he[i]->source->point;
-        myPoint3D *p3 = face_he[(i+1) % size]->source->point;
-
-        double crossProduct = (p2->X - p1->X) * (p3->Y - p1->Y) - (p2->Y - p1->Y) * (p3->X - p1->X);
-        if (crossProduct > 0) {
-          bool isValidEar = true;
-          for (int j = 0; j < size; j++) {
-            if (j == i || j == (i - 1 + size) % size || j == (i + 1) % size)
-              continue;
-
-          myPoint3D *p = face_he[j]->source->point;
-          double c1 = (p2->X - p1->X) * (p->Y - p1->Y) - (p2->Y - p1->Y) * (p->X - p1->X);
-          double c2 = (p3->X - p2->X) * (p->Y - p2->Y) - (p3->Y - p2->Y) * (p->X - p2->X);
-          double c3 = (p1->X - p3->X) * (p->Y - p3->Y) - (p1->Y - p3->Y) * (p->X - p3->X);
-    
-          if (c1 >= 0 && c2 >= 0 && c3 >= 0) {
-                  isValidEar = false;
-                  break;
-              }
-          }
-          if (isValidEar) {
-              index = i;
-              break;
-          }
-        }
-      }
-      if (index == -1) index = 0; 
-      // anchor + part of soon to be triangle (now ear)
-      myHalfedge *h0 = face_he[(index-1 + size) % size];
       myHalfedge *h1 = h0->next;
       myHalfedge *h2 = h1->next;
 
@@ -280,14 +344,18 @@ void myMesh::triangulate() {
       f->adjacent_halfedge = new_he_twin;
       new_he_twin->next = h2;
       // loop to find last he to link the previous for new_he_twin
-      myHalfedge *last = f->adjacent_halfedge;
+      myHalfedge *last = h2;
       while (last->next != h0)
         last = last->next;
       last->next = new_he_twin;
       new_he_twin->prev = last;
       new_he_twin->adjacent_face = f;
       // all the remaining he are all linked to f still
-      // only h0, h1 needed to change
+      myHalfedge *remaining_he = h2;
+      while (remaining_he != new_he_twin) {
+          remaining_he->adjacent_face = f;
+          remaining_he = remaining_he->next;
+      }
 
       halfedges.push_back(new_he);
       halfedges.push_back(new_he_twin);
