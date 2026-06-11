@@ -20,7 +20,7 @@ public:
 
 	void subdivisionCatmullClark();
 
-	void surfaceOfRevolution();
+	void surfaceOfRevolution(const std::vector<myPoint3D> &profile, int slices);
 	int ringSize(myFace *f);
 
 	void splitFaceTRIS(myFace *, myPoint3D *);

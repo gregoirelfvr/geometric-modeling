@@ -7,6 +7,7 @@
 #include <map>
 #include <sstream>
 #include <utility>
+#include <cmath>
 
 using namespace std;
 
@@ -473,13 +474,93 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p) {
     faces.push_back(f3);
 }
 
-void myMesh::subdivisionCatmullClark() { 
+void myMesh::subdivisionCatmullClark() {
   /**** TODO ****/
-  splitFaceQUADS(faces[0], new myPoint3D(0, 0, 0));
 
+  splitFaceQUADS(faces[0], new myPoint3D(1, 1, 0));
 }
 
-void myMesh::surfaceOfRevolution() { /**** TODO ****/ }
+void myMesh::surfaceOfRevolution(const std::vector<myPoint3D> &profile, int slices) {
+  /**** TODO ****/
+  if (profile.size() < 2 || slices < 3)
+    return;
+
+  int numPoints = profile.size();
+
+  std::vector<myVertex *> generated_verts;
+
+  for (int s = 0; s < slices; s++) {
+    double theta = s * (2.0 * M_PI / slices);
+
+    for (int i = 0; i < numPoints; i++) {
+      double px = profile[i].X;
+      double py = profile[i].Y;
+      double pz = profile[i].Z;
+
+      double nx = px * cos(theta) - pz * sin(theta);
+      double ny = py;
+      double nz = px * sin(theta) + pz * cos(theta);
+
+      myVertex *v = new myVertex();
+      v->point = new myPoint3D(nx, ny, nz);
+
+      vertices.push_back(v);
+      generated_verts.push_back(v);
+    }
+  }
+
+  std::map<std::pair<int, int>, myHalfedge *> twin_map;
+
+  auto getIndex = [&](int s, int i) { return s * numPoints + i; };
+
+  for (int s = 0; s < slices; s++) {
+    int next_s = (s + 1) % slices;
+
+    for (int i = 0; i < numPoints - 1; i++) {
+
+      int v0_idx = getIndex(s, i);
+      int v1_idx = getIndex(next_s, i);
+      int v2_idx = getIndex(next_s, i + 1);
+      int v3_idx = getIndex(s, i + 1);
+
+      std::vector<int> faceids = {v0_idx, v1_idx, v2_idx, v3_idx};
+
+      myFace *f = new myFace();
+      myHalfedge **hedges = new myHalfedge *[4];
+      for (int j = 0; j < 4; j++)
+        hedges[j] = new myHalfedge();
+
+      f->adjacent_halfedge = hedges[0];
+
+      for (int j = 0; j < 4; j++) {
+        int jplusone = (j + 1) % 4;
+        int jminusone = (j - 1 + 4) % 4;
+
+        hedges[j]->next = hedges[jplusone];
+        hedges[j]->prev = hedges[jminusone];
+        hedges[j]->adjacent_face = f;
+
+        int v_start = faceids[j];
+        int v_end = faceids[jplusone];
+
+        hedges[j]->source = generated_verts[v_start];
+        generated_verts[v_start]->originof = hedges[j];
+
+        auto it = twin_map.find(std::make_pair(v_end, v_start));
+        if (it != twin_map.end()) {
+          hedges[j]->twin = it->second;
+          it->second->twin = hedges[j];
+        } else {
+          twin_map[std::make_pair(v_start, v_end)] = hedges[j];
+        }
+        halfedges.push_back(hedges[j]);
+      }
+
+      delete[] hedges;
+      faces.push_back(f);
+    }
+  }
+}
 
 void myMesh::triangulate() {
   /**** TODO ****/
@@ -541,9 +622,12 @@ void myMesh::triangulate() {
                   isValidEar = false; break; 
                 }
                 temp = temp->next;
-            }
-            if (isValidEar) { h0 = he; break; }
           }
+          if (isValidEar) {
+            h0 = he;
+            break;
+          }
+        }
         he = he->next;
       } while (he != f->adjacent_halfedge);
 
@@ -608,4 +692,3 @@ bool myMesh::triangulate(myFace *f) {
   }
   return true;
 }
-
