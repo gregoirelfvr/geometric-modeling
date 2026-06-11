@@ -58,8 +58,7 @@ Reads 3D mesh data from a `.obj` file and builds a fully connected half-edge mes
 5. **Connecting Twins:** Employs a lookup map (`twin_map`) keyed on vertex pairs `(v_start, v_end)`. For each directed half-edge from `v_start` to `v_end`, it checks if the reverse directed edge `(v_end, v_start)` was already registered. If so, they are linked as twins (`twin`). If not, the current half-edge is added to the map.
 6. **Finalizing:** Calls `checkMesh()` to ensure all edges have a twin (i.e. the mesh has no open boundary/cracks) and `normalize()` to center and scale the model.
 
-> **Visual Space:**
-> ![Mesh Loading Visual](./images/mesh_loaded.png)
+<img src="./images/mesh_loaded.png" alt=""> 
 
 ---
 
