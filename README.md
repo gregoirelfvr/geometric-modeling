@@ -147,9 +147,6 @@ Inserts a new vertex `p` inside a triangular face `f` and subdivides it into thr
    - `e2->twin = e1_twin`
 6. **Database Update:** Pushes the new edges and new faces to the mesh database.
 
-> **Visual Space:**
-> ![Split Face TRIS Visual](myproj/images/split_edges.png)
-
 ---
 
 ### 6. `myMesh.cpp : splitEdge(myHalfedge *e1, myPoint3D *p)`
@@ -194,3 +191,30 @@ Subdivides a quadrilateral face into four smaller quadrilaterals by placing a ne
 7. **Database Update:** Registers the new half-edges and faces in the mesh data structures.
 
 
+> **Visual Space:**
+> ![Split Visual](myproj/images/split_edges.png)
+
+---
+
+### 8. `myMesh.cpp : surfaceOfRevolution(const std::vector<myPoint3D> &profile, int slices)`
+
+#### Concept & Purpose
+Generates a 3D surface mesh by rotating a 2D profile curve around the vertical Y-axis. This technique is commonly used to model radially symmetric objects such as bottles, bowls, and columns.
+
+#### How it is Implemented in the Code
+1. **Vertex Generation:**
+   - Loops through the number of angular `slices` (from $0$ to $slices - 1$).
+   - For each slice, computes the rotation angle $\theta = s \times \frac{2\pi}{slices}$.
+   - Rotates each point of the input `profile` curve around the Y-axis:
+     - $X' = X \cos\theta - Z \sin\theta$
+     - $Y' = Y$
+     - $Z' = X \sin\theta + Z \cos\theta$
+   - Instantiates a new `myVertex` for each computed point and adds it to the mesh database.
+2. **Topology & Face Creation:**
+   - Connects adjacent vertices between consecutive slices to form a grid of quadrilateral faces.
+   - For each quad face, allocates 4 half-edges and chains them sequentially using `next` and `prev` pointers.
+3. **Twin Resolution:**
+   - Links the twins of the newly generated half-edges using a lookup table (`twin_map`) mapping vertex pairs to half-edges, ensuring full connectivity of the half-edge data structure.
+
+> **Visual Space:**
+> ![Surface of Revolution Visual](myproj/images/surface_revolution.png)
